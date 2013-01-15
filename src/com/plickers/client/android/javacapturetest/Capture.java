@@ -2,16 +2,15 @@ package com.plickers.client.android.javacapturetest;
 
 import java.util.List;
 
-//import org.opencv.android.Utils;
-//import org.opencv.imgproc.Imgproc;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.hardware.Camera.Size;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
 public class Capture
 {
@@ -21,6 +20,10 @@ public class Capture
     private SurfaceHolder       dummyHolder;
     private Camera              camera;
 
+    private CaptureListener     callback          = null;
+    private Mat                 baseMat;
+    private Mat                 frame;
+
     private int                 targetWidth       = 1280;
     private int                 targetHeight      = 720;
     private Camera.Size         frameSize;
@@ -29,8 +32,11 @@ public class Capture
     private boolean             dummySurfaceReady = false;
     private boolean             cameraInited      = false;
 
-    public Capture(SurfaceView dummySurface)
+    public Capture(SurfaceView dummySurface, CaptureListener callback)
     {
+        //set up callback
+        this.callback = callback;
+
         // initialize dummy surface
         if (dummySurface == null)
         {
@@ -41,6 +47,19 @@ public class Capture
         dummyHolder = dummySurface.getHolder();
         dummyHolder.addCallback(dummySurfaceCallback);
         // dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+    }
+
+    public interface CaptureListener {
+
+        //called upon starting preview
+        public void onCaptureStarted(int width, int height);
+
+        //called upon stopping preview
+        public void onCaptureStopped();
+
+        //called when a frame is ready
+        public void onFrameReady(Mat inputFrame);
+
     }
 
     public boolean initCapture()
@@ -74,6 +93,10 @@ public class Capture
 
         frameSize = params.getPreviewSize();
 
+        //initialize images
+        baseMat = new Mat(frameSize.height + (frameSize.height / 2), frameSize.width, CvType.CV_8UC1);
+        frame = new Mat();
+
         //set callback
         camera.setPreviewCallback(onPreviewFrame);
 
@@ -93,26 +116,32 @@ public class Capture
         camera.release();
         cameraInited = false;
     }
-    
+
     public void startPreview()
     {
-        if(!previewOn && readyToPreview())
+        if (!previewOn && readyToPreview())
         {
             //TODO: if camera initialized, etc.
             camera.startPreview();
             previewOn = true;
+
+            if (callback != null)
+                callback.onCaptureStarted(frameSize.width, frameSize.height);
         }
     }
-    
+
     public void stopPreview()
     {
-        if(previewOn)
+        if (previewOn)
         {
             camera.stopPreview();
             previewOn = false;
+
+            if (callback != null)
+                callback.onCaptureStopped();
         }
     }
-    
+
     public boolean readyToPreview()
     {
         return dummySurfaceReady && cameraInited;
@@ -154,10 +183,13 @@ public class Capture
             // TODO Auto-generated method stub
             Log.i(TAG + "::onPreviewFrame", "data: " + data.length + " bytes");
             
-//            baseMat.put(0, 0, data);
-//            Imgproc.cvtColor(baseMat, frame, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+            baseMat.put(0, 0, data);
+            Imgproc.cvtColor(baseMat, frame, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+
+            if (callback != null)
+                callback.onFrameReady(frame);
+
 //            Utils.matToBitmap(frame, bitmap);
-//            
 //            ImageView image = (ImageView) findViewById(R.id.image);
 //            image.setImageBitmap(bitmap);
         }
@@ -186,6 +218,7 @@ public class Capture
         {
             // no-op
             dummySurfaceReady = false;
+            //TODO: stop preview/release capture here?
         }
     };
 

@@ -22,14 +22,14 @@ public class JavaCapture extends Activity
             // TODO: Handle initialization error
         }
     }
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        capture = new Capture((SurfaceView) findViewById(R.id.preview));
+        capture = new Capture((SurfaceView) findViewById(R.id.preview), null);
     }
 
     @Override
