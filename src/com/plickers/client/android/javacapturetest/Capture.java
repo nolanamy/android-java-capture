@@ -53,7 +53,6 @@ public class Capture
             return false;
         }
 
-        Log.i(TAG, "1");
         //set parameters
         Camera.Parameters params = camera.getParameters();
         Camera.Size size = getBestPreviewSize(targetWidth, targetHeight,
@@ -64,7 +63,6 @@ public class Capture
             camera.release();
             return false;
         }
-        Log.i(TAG, "2");
 
         params.setPreviewSize(size.width, size.height);
         params.setPreviewFormat(ImageFormat.NV21);
@@ -73,14 +71,12 @@ public class Capture
         
         //check which parameters were set
         params = camera.getParameters();
-        Log.i(TAG, "3");
 
         frameSize = params.getPreviewSize();
 
         //set callback
         camera.setPreviewCallback(onPreviewFrame);
 
-        Log.i(TAG, "4");
         //set display (dummy, usually null for now)
         setDummyPreviewDisplay();
 

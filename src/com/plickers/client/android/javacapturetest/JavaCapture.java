@@ -1,6 +1,7 @@
 package com.plickers.client.android.javacapturetest;
 
-import android.hardware.Camera;
+import org.opencv.android.OpenCVLoader;
+
 import android.os.Bundle;
 import android.app.Activity;
 import android.util.Log;
@@ -13,6 +14,14 @@ public class JavaCapture extends Activity
     private static final String TAG               = "Plickers-JavaCaptureTest::JavaCapture";
 
     Capture capture;
+    
+    static
+    {
+        if (!OpenCVLoader.initDebug())
+        {
+            // TODO: Handle initialization error
+        }
+    }
     
     @Override
     protected void onCreate(Bundle savedInstanceState)
