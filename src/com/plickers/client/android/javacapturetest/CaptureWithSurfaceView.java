@@ -17,6 +17,8 @@ public class CaptureWithSurfaceView extends Capture
     {
         super(callback);
 
+        Log.i(TAG, "Constructor");
+
         // initialize dummy surface
         if (dummySurface == null)
         {
@@ -38,7 +40,6 @@ public class CaptureWithSurfaceView extends Capture
     @Override
     public boolean setDummyPreviewDisplay()
     {
-        //TODO: preview texture for new devices
         try
         {
             if (dummySurfaceReady)

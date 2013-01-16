@@ -4,6 +4,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -37,7 +38,14 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview), this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+        {
+            capture = new CaptureWithSurfaceTexture(this);
+        }
+        else
+        {
+            capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview), this);
+        }
         image = (SurfaceView) findViewById(R.id.image);
     }
 

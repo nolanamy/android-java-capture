@@ -120,7 +120,7 @@ public abstract class Capture
 
     public void releaseCapture()
     {
-        Log.d(TAG, "releaseCapture");
+        Log.i(TAG, "releaseCapture");
 
         //block until thread stops
         forceStopThread();
@@ -202,9 +202,9 @@ public abstract class Capture
             {
                 this.notify();
             }
-            Log.d(TAG, "Wating for thread...");
-            if (thread != null)
-                thread.join();
+            Log.i(TAG, "Waiting for thread...");
+            if (thread != null) thread.join();
+            Log.i(TAG, "...done");
         }
         catch (InterruptedException e)
         {
@@ -260,7 +260,7 @@ public abstract class Capture
                     callback.onFrameReady(frame);
                 }
             }
-            Log.d(TAG, "CaptureWorker::run - end processing thread");
+            Log.i(TAG, "CaptureWorker::run - end processing thread");
         }
     }
 
