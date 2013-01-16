@@ -58,7 +58,7 @@ public class Capture
         public void onCaptureStopped();
 
         //called when a frame is ready
-        public void onFrameReady(Mat inputFrame);
+        public void onFrameReady(Mat frame);
 
     }
 
@@ -188,10 +188,6 @@ public class Capture
 
             if (callback != null)
                 callback.onFrameReady(frame);
-
-//            Utils.matToBitmap(frame, bitmap);
-//            ImageView image = (ImageView) findViewById(R.id.image);
-//            image.setImageBitmap(bitmap);
         }
     };
 
