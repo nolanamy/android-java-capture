@@ -35,6 +35,8 @@ public abstract class Capture
 
     private Thread              thread;
 
+    private byte[]              buffer;
+
     public Capture(CaptureListener callback, CameraOpener opener)
     {
         // set up callback
@@ -125,8 +127,15 @@ public abstract class Capture
         baseMat = new Mat(frameSize.height + (frameSize.height / 2), frameSize.width, CvType.CV_8UC1);
         frame = new Mat();
 
+        //initialize buffer
+        int bufferSize = frameSize.height * frameSize.width
+                * ImageFormat.getBitsPerPixel(params.getPreviewFormat()) / 8;
+        buffer = new byte[bufferSize];
+
         //set callback
-        camera.setPreviewCallback(onPreviewFrame);
+//        camera.setPreviewCallback(onPreviewFrame);
+        camera.addCallbackBuffer(buffer);
+        camera.setPreviewCallbackWithBuffer(onPreviewFrame);
 
         //set display (dummy, usually null for now)
         setDummyPreviewDisplay();
@@ -202,6 +211,8 @@ public abstract class Capture
                 baseMat.put(0, 0, data);
                 Capture.this.notify();
             }
+            if (camera != null)
+                camera.addCallbackBuffer(buffer);
         }
     };
 
