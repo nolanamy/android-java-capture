@@ -2,7 +2,6 @@ package com.plickers.client.android.javacapturetest;
 
 import java.util.List;
 
-import org.opencv.android.JavaCameraView;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
@@ -11,55 +10,38 @@ import org.opencv.imgproc.Imgproc;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.util.Log;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 
-public class Capture
+public abstract class Capture
 {
-    private static final String TAG               = "JavaCaptureTest::Capture";
+    private static final String TAG          = "JavaCaptureTest::Capture";
 
-    private SurfaceView         dummySurface;
-    private SurfaceHolder       dummyHolder;
-    private Camera              camera;
+    protected Camera            camera;
 
-    private CaptureListener     callback          = null;
+    private CaptureListener     callback     = null;
     private Mat                 baseMat;
     private Mat                 frame;
 
     public boolean              stopRequested;
 
-    private int                 captureType       = Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA;
-    private int                 targetWidth       = 1280;
-    private int                 targetHeight      = 720;
+    private int                 captureType  = Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA;
+    private int                 targetWidth  = 1280;
+    private int                 targetHeight = 720;
 
     private Camera.Size         frameSize;
 
-    private boolean             previewOn         = false;
-    private boolean             dummySurfaceReady = false;
-    private boolean             cameraInited      = false;
+    private boolean             previewOn    = false;
+    private boolean             cameraInited = false;
 
     private Thread              thread;
 
-    public Capture(SurfaceView dummySurface, CaptureListener callback)
+    public Capture(CaptureListener callback)
     {
         //set up callback
         this.callback = callback;
-
-        // initialize dummy surface
-        if (dummySurface == null)
-        {
-            Log.e(TAG, "dummySurface must not be null");
-            return;
-        }
-        this.dummySurface = dummySurface;
-        dummyHolder = dummySurface.getHolder();
-        dummyHolder.addCallback(dummySurfaceCallback);
-        dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
     public interface CaptureListener
     {
-
         //called upon starting preview
         public void onCaptureStarted(int width, int height);
 
@@ -68,7 +50,6 @@ public class Capture
 
         //called when a frame is ready
         public void onFrameReady(Mat frame);
-
     }
 
     public void setTargetSize(int width, int height)
@@ -160,9 +141,9 @@ public class Capture
 
             // start processing thread
             Log.d(TAG, "Starting processing thread");
-            
+
             stopRequested = false;
-            
+
             thread = new Thread(new CaptureWorker());
             thread.start();
 
@@ -185,30 +166,12 @@ public class Capture
 
     public boolean readyToPreview()
     {
-        return dummySurfaceReady && cameraInited;
+        return dummyPreviewDisplayReady() && cameraInited;
     }
 
-    public boolean setDummyPreviewDisplay()
-    {
-        //TODO: preview texture for new devices
-        try
-        {
-            if (dummySurfaceReady)
-            {
-                camera.setPreviewDisplay(dummyHolder);
-            }
-            else
-            {
-                camera.setPreviewDisplay(null);
-            }
-        }
-        catch (Throwable t)
-        {
-            Log.e(TAG, "initCapture - Exception in setPreviewDisplay()", t);
-            return false;
-        }
-        return true;
-    }
+    protected abstract boolean dummyPreviewDisplayReady();
+
+    protected abstract boolean setDummyPreviewDisplay();
     
     private Camera.PreviewCallback onPreviewFrame = new Camera.PreviewCallback()
     {
@@ -222,33 +185,6 @@ public class Capture
                 baseMat.put(0, 0, data);
                 Capture.this.notify();
             }
-        }
-    };
-
-    // handle dummySurface events
-    //TODO: when are these called? esp. as compared to lifecycle events, etc.
-    private SurfaceHolder.Callback dummySurfaceCallback = new SurfaceHolder.Callback()
-    {
-        @Override
-        public void surfaceCreated(SurfaceHolder holder)
-        {
-            // no-op -- wait until
-            // surfaceChanged()
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
-        {
-            dummySurfaceReady = true;
-            setDummyPreviewDisplay();
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder)
-        {
-            // no-op
-            dummySurfaceReady = false;
-            //TODO: stop preview/release capture here?
         }
     };
 
@@ -297,7 +233,6 @@ public class Capture
                     }
                     catch (InterruptedException e)
                     {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }

@@ -37,7 +37,7 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        capture = new Capture((SurfaceView) findViewById(R.id.preview), this);
+        capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview), this);
         image = (SurfaceView) findViewById(R.id.image);
     }
 
@@ -96,10 +96,6 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
 
         Utils.matToBitmap(frame, bitmap);
 
-        // ImageView image = (ImageView) findViewById(R.id.image);
-        // image.setImageBitmap(bitmap);
-
-        SurfaceView image = (SurfaceView) findViewById(R.id.image);
         try
         {
             Surface surface = image.getHolder().getSurface();
