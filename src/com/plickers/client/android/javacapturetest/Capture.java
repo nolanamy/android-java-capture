@@ -14,7 +14,7 @@ import android.view.SurfaceView;
 
 public class Capture
 {
-    private static final String TAG               = "Plickers-JavaCaptureTest::Capture";
+    private static final String TAG               = "JavaCaptureTest::Capture";
 
     private SurfaceView         dummySurface;
     private SurfaceHolder       dummyHolder;
@@ -31,6 +31,7 @@ public class Capture
     private boolean             previewOn         = false;
     private boolean             dummySurfaceReady = false;
     private boolean             cameraInited      = false;
+    private boolean             displaySet      = false;
 
     public Capture(SurfaceView dummySurface, CaptureListener callback)
     {
@@ -46,7 +47,7 @@ public class Capture
         this.dummySurface = dummySurface;
         dummyHolder = dummySurface.getHolder();
         dummyHolder.addCallback(dummySurfaceCallback);
-        // dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
     public interface CaptureListener {
@@ -58,7 +59,7 @@ public class Capture
         public void onCaptureStopped();
 
         //called when a frame is ready
-        public void onFrameReady(Mat inputFrame);
+        public void onFrameReady(Mat frame);
 
     }
 
@@ -144,7 +145,7 @@ public class Capture
 
     public boolean readyToPreview()
     {
-        return dummySurfaceReady && cameraInited;
+        return dummySurfaceReady && cameraInited && displaySet;
     }
     
     public void setTargetSize(int width, int height)
@@ -155,16 +156,19 @@ public class Capture
     
     public boolean setDummyPreviewDisplay()
     {
+        Log.i(TAG + "::setDummyPreviewDisplay()", "surface ready? " + dummySurfaceReady);
         //TODO: preview texture for new devices
         try
         {
             if(dummySurfaceReady)
             {
                 camera.setPreviewDisplay(dummyHolder);
+                displaySet = true;
             }
             else
             {
-                camera.setPreviewDisplay(null);
+//                camera.setPreviewDisplay(null);
+                displaySet = false;
             }
         }
         catch (Throwable t)
@@ -188,10 +192,6 @@ public class Capture
 
             if (callback != null)
                 callback.onFrameReady(frame);
-
-//            Utils.matToBitmap(frame, bitmap);
-//            ImageView image = (ImageView) findViewById(R.id.image);
-//            image.setImageBitmap(bitmap);
         }
     };
 
@@ -209,6 +209,7 @@ public class Capture
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
         {
+            initCapture();
             dummySurfaceReady = true;
             setDummyPreviewDisplay();
         }
