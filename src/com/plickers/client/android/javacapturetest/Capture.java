@@ -46,7 +46,7 @@ public class Capture
         this.dummySurface = dummySurface;
         dummyHolder = dummySurface.getHolder();
         dummyHolder.addCallback(dummySurfaceCallback);
-        // dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
     public interface CaptureListener {
