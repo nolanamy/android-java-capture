@@ -16,6 +16,7 @@ public abstract class Capture
     private static final String TAG          = "JavaCaptureTest::Capture";
 
     protected Camera            camera;
+    private CameraOpener        opener;
 
     private CaptureListener     callback     = null;
     private Mat                 baseMat;
@@ -34,10 +35,22 @@ public abstract class Capture
 
     private Thread              thread;
 
-    public Capture(CaptureListener callback)
+    public Capture(CaptureListener callback, CameraOpener opener)
     {
-        //set up callback
+        // set up callback
         this.callback = callback;
+
+        // set up opener
+        this.opener = opener;
+    }
+
+    public interface CameraOpener
+    {
+        //abstracts new and old open()/open(int) versions
+        public abstract Camera open();
+
+        //sets the camera index to be used. call before open.
+        public abstract void setIndex(int index);
     }
 
     public interface CaptureListener
@@ -50,6 +63,11 @@ public abstract class Capture
 
         //called when a frame is ready
         public void onFrameReady(Mat frame);
+    }
+
+    public void setCameraIndex(int index)
+    {
+        opener.setIndex(index);
     }
 
     public void setTargetSize(int width, int height)
@@ -73,8 +91,7 @@ public abstract class Capture
 
     public boolean initCapture()
     {
-        camera = Camera.open();
-        //TODO: new open for new devices
+        camera = opener.open();
 
         if (camera == null)
         {

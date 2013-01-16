@@ -13,9 +13,9 @@ public class CaptureWithSurfaceTexture extends Capture
 
     private SurfaceTexture      dummyTexture;
 
-    public CaptureWithSurfaceTexture(CaptureListener callback)
+    public CaptureWithSurfaceTexture(CaptureListener callback, CameraOpener opener)
     {
-        super(callback);
+        super(callback, opener);
 
         Log.i(TAG, "Constructor");
     }

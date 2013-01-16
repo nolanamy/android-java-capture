@@ -40,11 +40,20 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
         {
-            capture = new CaptureWithSurfaceTexture(this);
+            Log.i(TAG, "HONEYCOMB <= VERSION");
+            capture = new CaptureWithSurfaceTexture(this, new CameraIntegerOpener());
+        }
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+        {
+            Log.i(TAG, "GINGERBREAD <= VERSION < HONEYCOMB");
+            capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview),
+                    this, new CameraIntegerOpener());
         }
         else
         {
-            capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview), this);
+            Log.i(TAG, "VERSION < GINGERBREAD");
+            capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview),
+                    this, new CameraDefaultOpener());
         }
         image = (SurfaceView) findViewById(R.id.image);
     }
@@ -54,6 +63,7 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
     {
         super.onResume();
 
+        capture.setCameraIndex(0);
         capture.initCapture();
     }
 

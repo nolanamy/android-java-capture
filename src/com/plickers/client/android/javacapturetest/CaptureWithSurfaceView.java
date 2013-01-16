@@ -13,9 +13,9 @@ public class CaptureWithSurfaceView extends Capture
 
     private boolean             dummySurfaceReady = false;
 
-    public CaptureWithSurfaceView(SurfaceView dummySurface, CaptureListener callback)
+    public CaptureWithSurfaceView(SurfaceView dummySurface, CaptureListener callback, CameraOpener opener)
     {
-        super(callback);
+        super(callback, opener);
 
         Log.i(TAG, "Constructor");
 
