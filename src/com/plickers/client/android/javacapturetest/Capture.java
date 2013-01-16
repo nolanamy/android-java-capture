@@ -2,8 +2,10 @@ package com.plickers.client.android.javacapturetest;
 
 import java.util.List;
 
+import org.opencv.android.JavaCameraView;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
 import android.graphics.ImageFormat;
@@ -14,7 +16,7 @@ import android.view.SurfaceView;
 
 public class Capture
 {
-    private static final String TAG               = "Plickers-JavaCaptureTest::Capture";
+    private static final String TAG               = "JavaCaptureTest::Capture";
 
     private SurfaceView         dummySurface;
     private SurfaceHolder       dummyHolder;
@@ -24,13 +26,19 @@ public class Capture
     private Mat                 baseMat;
     private Mat                 frame;
 
+    public boolean              stopRequested;
+
+    private int                 captureType       = Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA;
     private int                 targetWidth       = 1280;
     private int                 targetHeight      = 720;
+
     private Camera.Size         frameSize;
 
     private boolean             previewOn         = false;
     private boolean             dummySurfaceReady = false;
     private boolean             cameraInited      = false;
+
+    private Thread              thread;
 
     public Capture(SurfaceView dummySurface, CaptureListener callback)
     {
@@ -49,7 +57,8 @@ public class Capture
         dummyHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
-    public interface CaptureListener {
+    public interface CaptureListener
+    {
 
         //called upon starting preview
         public void onCaptureStarted(int width, int height);
@@ -60,6 +69,25 @@ public class Capture
         //called when a frame is ready
         public void onFrameReady(Mat frame);
 
+    }
+
+    public void setTargetSize(int width, int height)
+    {
+        targetWidth = width;
+        targetHeight = height;
+    }
+
+    public void setPreviewFormat(int type)
+    {
+        if (type == Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA
+                || type == Highgui.CV_CAP_ANDROID_GREY_FRAME)
+        {
+            captureType = type;
+        }
+        else
+        {
+            Log.e(TAG, "Invalid frame format! Only RGBA and Gray Scale are supported!");
+        }
     }
 
     public boolean initCapture()
@@ -87,11 +115,13 @@ public class Capture
         params.setPreviewFormat(ImageFormat.NV21);
 
         camera.setParameters(params);
-        
+
         //check which parameters were set
         params = camera.getParameters();
 
         frameSize = params.getPreviewSize();
+
+        Log.i(TAG, "Selected preview size: " + frameSize.width + "x" + frameSize.height);
 
         //initialize images
         baseMat = new Mat(frameSize.height + (frameSize.height / 2), frameSize.width, CvType.CV_8UC1);
@@ -109,10 +139,14 @@ public class Capture
 
     public void releaseCapture()
     {
+        Log.d(TAG, "releaseCapture");
+
+        //block until thread stops
+        forceStopThread();
         stopPreview();
-        
+
         camera.setPreviewCallback(null);
-        
+
         camera.release();
         cameraInited = false;
     }
@@ -121,9 +155,16 @@ public class Capture
     {
         if (!previewOn && readyToPreview())
         {
-            //TODO: if camera initialized, etc.
             camera.startPreview();
             previewOn = true;
+
+            // start processing thread
+            Log.d(TAG, "Starting processing thread");
+            
+            stopRequested = false;
+            
+            thread = new Thread(new CaptureWorker());
+            thread.start();
 
             if (callback != null)
                 callback.onCaptureStarted(frameSize.width, frameSize.height);
@@ -146,19 +187,13 @@ public class Capture
     {
         return dummySurfaceReady && cameraInited;
     }
-    
-    public void setTargetSize(int width, int height)
-    {
-        targetWidth = width;
-        targetHeight = height;
-    }
-    
+
     public boolean setDummyPreviewDisplay()
     {
         //TODO: preview texture for new devices
         try
         {
-            if(dummySurfaceReady)
+            if (dummySurfaceReady)
             {
                 camera.setPreviewDisplay(dummyHolder);
             }
@@ -169,7 +204,7 @@ public class Capture
         }
         catch (Throwable t)
         {
-            Log.e(TAG + "::initCapture", "Exception in setPreviewDisplay()", t);
+            Log.e(TAG, "initCapture - Exception in setPreviewDisplay()", t);
             return false;
         }
         return true;
@@ -180,18 +215,17 @@ public class Capture
         @Override
         public void onPreviewFrame(byte[] data, Camera camera)
         {
-            // TODO Auto-generated method stub
-            Log.i(TAG + "::onPreviewFrame", "data: " + data.length + " bytes");
+            Log.i(TAG, "onPreviewFrame - data: " + data.length + " bytes");
             
-            baseMat.put(0, 0, data);
-            Imgproc.cvtColor(baseMat, frame, Imgproc.COLOR_YUV2RGBA_NV21, 4);
-
-            if (callback != null)
-                callback.onFrameReady(frame);
+            synchronized (Capture.this)
+            {
+                baseMat.put(0, 0, data);
+                Capture.this.notify();
+            }
         }
     };
 
-    // handle dummy surface events
+    // handle dummySurface events
     //TODO: when are these called? esp. as compared to lifecycle events, etc.
     private SurfaceHolder.Callback dummySurfaceCallback = new SurfaceHolder.Callback()
     {
@@ -218,20 +252,97 @@ public class Capture
         }
     };
 
+    private void requestStopThread()
+    {
+        stopRequested = true;
+    }
+
+    private void forceStopThread()
+    {
+        requestStopThread();
+        try
+        {
+            synchronized (this)
+            {
+                this.notify();
+            }
+            Log.d(TAG, "Wating for thread...");
+            if (thread != null)
+                thread.join();
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            thread = null;
+        }
+    }
+
+    // image handling thread
+    private class CaptureWorker implements Runnable
+    {
+        public void run()
+        {
+            while (!stopRequested)
+            {
+                // wait for the next frame
+                Log.i(TAG, "CaptureWorker::run - waiting for frame...");
+                synchronized (Capture.this)
+                {
+                    try
+                    {
+                        Capture.this.wait();
+                    }
+                    catch (InterruptedException e)
+                    {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                Log.i(TAG, "CaptureWorker::run - ...got frame");
+
+                if (stopRequested)
+                    break;
+
+                // convert to frame as appropriate
+                if (captureType == Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA)
+                {
+                    Imgproc.cvtColor(baseMat, frame, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+                }
+                else
+                {
+                    frame = baseMat.submat(0, frameSize.height, 0, frameSize.width);
+                }
+
+                if (stopRequested)
+                    break;
+
+                // output frame
+                if (!frame.empty() && callback != null)
+                {
+                    callback.onFrameReady(frame);
+                }
+            }
+            Log.d(TAG, "CaptureWorker::run - end processing thread");
+        }
+    }
+
     private Camera.Size getBestPreviewSize(int targetWidth, int targetHeight,
             List<Camera.Size> sizes)
     {
         Camera.Size bestSize = null;
         int bestSizeDistance = 1000000000;
-        
-        if(sizes == null)
+
+        if (sizes == null)
         {
             return null;
         }
 
         for (Camera.Size size : sizes)
         {
-            Log.i(TAG + "::getBestPreviewSize", "size: " + size.width + "x" + size.height);
+            Log.i(TAG, "getBestPreviewSize - size: " + size.width + "x" + size.height);
 
             int widthDelta = targetWidth - size.width;
             int heightDelta = targetHeight - size.height;

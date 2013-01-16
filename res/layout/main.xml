@@ -7,8 +7,8 @@
 
     <SurfaceView
         android:id="@+id/preview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_width="320px"
+        android:layout_height="180px" />
 
     <RelativeLayout
         android:id="@+id/overlay"
@@ -16,7 +16,7 @@
         android:layout_height="match_parent"
         android:background="#0066cc" >
 
-        <ImageView
+        <SurfaceView
             android:id="@+id/image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

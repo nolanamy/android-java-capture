@@ -7,18 +7,19 @@ import org.opencv.core.Mat;
 import android.os.Bundle;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.SurfaceView;
-import android.widget.ImageView;
 
 public class JavaCapture extends Activity implements Capture.CaptureListener
 {
-    private static final String TAG = "Plickers-JavaCaptureTest::JavaCapture";
+    private static final String TAG = "JavaCaptureTest::JavaCapture";
 
     private Capture             capture;
-    private ImageView           image;
+    private SurfaceView         image;
 
     private Bitmap              bitmap;
 
@@ -37,7 +38,7 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         setContentView(R.layout.main);
 
         capture = new Capture((SurfaceView) findViewById(R.id.preview), this);
-        image = (ImageView) findViewById(R.id.image);
+        image = (SurfaceView) findViewById(R.id.image);
     }
 
     @Override
@@ -78,8 +79,6 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
     @Override
     public void onCaptureStarted(int width, int height)
     {
-        // TODO Auto-generated method stub
-
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
     }
 
@@ -93,11 +92,25 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
     @Override
     public void onFrameReady(Mat frame)
     {
-        // TODO Auto-generated method stub
+        Log.i(TAG, "onFrameReady");
 
         Utils.matToBitmap(frame, bitmap);
-        ImageView image = (ImageView) findViewById(R.id.image);
-        image.setImageBitmap(bitmap);
+
+        // ImageView image = (ImageView) findViewById(R.id.image);
+        // image.setImageBitmap(bitmap);
+
+        SurfaceView image = (SurfaceView) findViewById(R.id.image);
+        try
+        {
+            Surface surface = image.getHolder().getSurface();
+            Canvas canvas = surface.lockCanvas(null);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+            surface.unlockCanvasAndPost(canvas);
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG, "onFrameReady exception: " + e);
+        }
     }
 
 }
