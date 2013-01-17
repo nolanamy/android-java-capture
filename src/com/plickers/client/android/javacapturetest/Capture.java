@@ -13,27 +13,28 @@ import android.util.Log;
 
 public abstract class Capture
 {
-    private static final String TAG          = "JavaCaptureTest::Capture";
+    private static final String TAG           = "JavaCaptureTest::Capture";
 
     protected Camera            camera;
     private CameraOpener        opener;
 
-    private CaptureListener     callback     = null;
+    private CaptureListener     callback      = null;
     private Mat                 baseMat;
     private Mat                 frame;
 
     public boolean              stopRequested;
 
-    private int                 captureType  = Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA;
-    private int                 targetWidth  = 1280;
-    private int                 targetHeight = 720;
+    private int                 captureType   = Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA;
+    private int                 targetWidth   = 1280;
+    private int                 targetHeight  = 720;
 
     private Camera.Size         frameSize;
 
-    private boolean             previewOn    = false;
-    private boolean             cameraInited = false;
+    private boolean             previewOn     = false;
+    private boolean             cameraInited  = false;
 
     private Thread              thread;
+    private boolean             threadWaiting = false;
 
     private byte[]              buffer;
 
@@ -208,7 +209,10 @@ public abstract class Capture
             
             synchronized (Capture.this)
             {
-                baseMat.put(0, 0, data);
+                if(threadWaiting)
+                {
+                    baseMat.put(0, 0, data);
+                }
                 Capture.this.notify();
             }
             if (camera != null)
@@ -257,7 +261,9 @@ public abstract class Capture
                 {
                     try
                     {
+                        threadWaiting = true;
                         Capture.this.wait();
+                        threadWaiting = false;
                     }
                     catch (InterruptedException e)
                     {
