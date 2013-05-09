@@ -94,7 +94,21 @@ public abstract class Capture
 
     public boolean initCapture()
     {
-        camera = opener.open();
+        Thread cameraOpenThread = new Thread(new CameraOpenThread(), "CameraOpen");
+        cameraOpenThread.start();
+        
+        //wait for camera to open
+        synchronized(this)
+        {
+            try
+            {
+                this.wait();
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+        }
 
         if (camera == null)
         {
@@ -134,9 +148,9 @@ public abstract class Capture
         buffer = new byte[bufferSize];
 
         //set callback
-//        camera.setPreviewCallback(onPreviewFrame);
-        camera.addCallbackBuffer(buffer);
-        camera.setPreviewCallbackWithBuffer(onPreviewFrame);
+        camera.setPreviewCallback(onPreviewFrame);
+//        camera.addCallbackBuffer(buffer);
+//        camera.setPreviewCallbackWithBuffer(onPreviewFrame);
 
         //set display (dummy, usually null for now)
         setDummyPreviewDisplay();
@@ -159,11 +173,50 @@ public abstract class Capture
         cameraInited = false;
     }
 
+    private class CameraOpenThread implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+                camera = opener.open();
+                synchronized(Capture.this)
+                {
+                    Capture.this.notify();
+                }
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    protected class PreviewStartThread extends Thread
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+                camera.startPreview();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void startPreview()
     {
         if (!previewOn && readyToPreview())
         {
-            camera.startPreview();
+//            camera.startPreview();
+            PreviewStartThread previewStartThread = new PreviewStartThread();
+            previewStartThread.start();
+            
             previewOn = true;
 
             // start processing thread
@@ -171,7 +224,7 @@ public abstract class Capture
 
             stopRequested = false;
 
-            thread = new Thread(new CaptureWorker());
+            thread = new Thread(new CaptureWorker(), "CaptureWorker");
             thread.start();
 
             if (callback != null)
