@@ -7,13 +7,13 @@
 
     <SurfaceView
         android:id="@+id/preview"
-        android:layout_width="320px"
-        android:layout_height="180px" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <RelativeLayout
         android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="320dp"
+        android:layout_height="180dp"
         android:background="#0066cc" >
 
         <SurfaceView

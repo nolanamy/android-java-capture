@@ -38,14 +38,9 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
         {
-            Log.i(TAG, "HONEYCOMB <= VERSION");
-            capture = new CaptureWithSurfaceTexture(this, new CameraIntegerOpener());
-        }
-        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
-        {
-            Log.i(TAG, "GINGERBREAD <= VERSION < HONEYCOMB");
+            Log.i(TAG, "GINGERBREAD <= VERSION");
             capture = new CaptureWithSurfaceView((SurfaceView) findViewById(R.id.preview),
                     this, new CameraIntegerOpener());
         }
