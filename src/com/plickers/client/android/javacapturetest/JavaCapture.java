@@ -6,7 +6,6 @@ import org.opencv.core.Mat;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.Bitmap;
 //import android.graphics.Canvas;
@@ -21,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
-@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class JavaCapture extends Activity implements Capture.CaptureListener
 {
     private static final String TAG = "JavaCaptureTest::JavaCapture";
