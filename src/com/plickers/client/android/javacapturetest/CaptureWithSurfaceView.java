@@ -73,6 +73,7 @@ public class CaptureWithSurfaceView extends Capture
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
         {
+            Log.d(TAG, "surfaceChanged; size: " + width + "x" + height);
             dummySurfaceReady = true;
             setDummyPreviewDisplay();
         }

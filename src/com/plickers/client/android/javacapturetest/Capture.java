@@ -66,6 +66,9 @@ public abstract class Capture
 
         //called when a frame is ready
         public void onFrameReady(Mat frame);
+
+        //called when preview size is set
+        public void onPreviewSizeSet(int width, int height);
     }
 
     public void setCameraIndex(int index)
@@ -101,6 +104,10 @@ public abstract class Capture
             return false;
         }
 
+        //set camera orientation (requires API 8 "froyo") http://developer.android.com/reference/android/hardware/Camera.html#setDisplayOrientation(int)
+        //assume portrait
+        camera.setDisplayOrientation(90);
+
         //set parameters
         Camera.Parameters params = camera.getParameters();
         Camera.Size size = getBestPreviewSize(targetWidth, targetHeight,
@@ -123,6 +130,9 @@ public abstract class Capture
         frameSize = params.getPreviewSize();
 
         Log.i(TAG, "Selected preview size: " + frameSize.width + "x" + frameSize.height);
+
+        //notify callback of new preview size so it can update layout as necessary
+        callback.onPreviewSizeSet(frameSize.width, frameSize.height);
 
         //initialize images
         baseMat = new Mat(frameSize.height + (frameSize.height / 2), frameSize.width, CvType.CV_8UC1);
@@ -311,7 +321,7 @@ public abstract class Capture
 
         for (Camera.Size size : sizes)
         {
-            Log.i(TAG, "getBestPreviewSize - size: " + size.width + "x" + size.height);
+            Log.v(TAG, "getBestPreviewSize - size: " + size.width + "x" + size.height);
 
             int widthDelta = targetWidth - size.width;
             int heightDelta = targetHeight - size.height;
