@@ -101,6 +101,10 @@ public abstract class Capture
             return false;
         }
 
+        //set camera orientation (requires API 8 "froyo") http://developer.android.com/reference/android/hardware/Camera.html#setDisplayOrientation(int)
+        //assume portrait
+        camera.setDisplayOrientation(90);
+
         //set parameters
         Camera.Parameters params = camera.getParameters();
         Camera.Size size = getBestPreviewSize(targetWidth, targetHeight,
