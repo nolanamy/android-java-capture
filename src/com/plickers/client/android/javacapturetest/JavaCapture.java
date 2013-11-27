@@ -13,11 +13,13 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Gravity;
 //import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class JavaCapture extends Activity implements Capture.CaptureListener
@@ -26,6 +28,7 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
 
     private Capture             capture;
 //    private SurfaceView         image;
+    private boolean center = true;
 
     private Bitmap              bitmap;
 
@@ -61,10 +64,21 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         }
 //        image = (SurfaceView) findViewById(R.id.image);
 
+        //start capture
         final Button button = (Button) findViewById(R.id.button_run);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 capture.startPreview();
+            }
+        });
+
+        //toggle centering of surfaceView
+        final Button buttonCenter = (Button) findViewById(R.id.button_center);
+        buttonCenter.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                LinearLayout view = (LinearLayout) findViewById(R.id.surface_layout);
+                view.setGravity(center ? Gravity.TOP|Gravity.LEFT : Gravity.CENTER);
+                center = !center;
             }
         });
     }
@@ -148,16 +162,6 @@ public class JavaCapture extends Activity implements Capture.CaptureListener
         params.width = height;
         Log.d(TAG, "updating SurfaceView size: " + params.width + "x" + params.height);
         view.setLayoutParams(params);
-
-        //TODO also, center SurfaceView by comparing its size to the layout size
-        //.... probably need to get the size of the layout in some android callback called when all views are set up
-        //.... android gives size: 0x0 before that, it seems
-
-        //        View rootView = ((ViewGroup)findViewById(android.R.id.content)).getChildAt(0);
-        //        Log.d(TAG, "rootView size: " + rootView.getMeasuredWidth() + "x" + rootView.getMeasuredHeight());
-
-        //        view.setTranslationY((int) ((height - rootViewHeight)*0.5));
-        //        view.setTranslationX((int) ((width - rootViewWidth)*0.5));
     }
 
 }
